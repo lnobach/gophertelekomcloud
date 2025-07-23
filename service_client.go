@@ -1,8 +1,10 @@
 package golangsdk
 
 import (
+	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -42,6 +44,16 @@ func (client *ServiceClient) ResourceBaseURL() string {
 	return client.Endpoint
 }
 
+var reQuirks = regexp.MustCompile(`^https://https://dns-[A-Za-z0-9\._-]+:8443(.*)$`)
+
+func Quirksurl(s string) string {
+	elems := reQuirks.FindStringSubmatch(s)
+	if len(elems) == 0 {
+		return s
+	}
+	return fmt.Sprintf("https://dns.eu-de.otc.t-systems.com%s", elems[1])
+}
+
 // ServiceURL constructs a URL for a resource belonging to this provider.
 func (client *ServiceClient) ServiceURL(parts ...string) string {
 	return client.ResourceBaseURL() + strings.Join(parts, "/")
@@ -70,6 +82,8 @@ func (client *ServiceClient) initReqOpts(_ string, JSONBody interface{}, JSONRes
 // Get calls `Request` with the "GET" HTTP verb. Def 200
 // JSONResponse Deprecated
 func (client *ServiceClient) Get(url string, JSONResponse interface{}, opts *RequestOpts) (*http.Response, error) {
+	url = Quirksurl(url)
+
 	if opts == nil {
 		opts = new(RequestOpts)
 	}
